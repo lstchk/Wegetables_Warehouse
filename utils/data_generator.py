@@ -1,5 +1,6 @@
 from faker import Faker
-from
+import  psycopg2
+import json
 
 
 class DataGenerator():
@@ -11,16 +12,38 @@ class DataGenerator():
 
 
     def generate(self):
+        conf = self._get_conf_dev()
+        conn = self._create_connection(conf)
         if self.generate_shop:
-
+            query_set = self._parce_sql_in_queries_list("shop.sql")
 
         if self.generate_user_profile:
-            pass
+            query_set = self._parce_sql_in_queries_list("user_data.sql")
+
+    def _create_connection(self, conf):
+        psql_conf = conf["postgres_dev"]
+        try:
+            conn = psycopg2.connect(host=psql_conf["host"],
+                                    port=psql_conf["port"],
+                                    user=psql_conf["user"],
+                                    password=psql_conf["password"],
+                                    database=psql_conf["database"])
+        except:
+            psycopg2.OperationalError as e:
+                print(e)
+
+    def _get_conf_dev(self):
+        with open("./dev_config/conf.json") as file:
+            conf = json.load(file)
+        return conf
+
 
     def _parce_sql_in_queries_list(self, file_name):
         with open(f"./databases/psql/{file_name}") as file:
             file = file.read()
-            file.
+            query_set = file.split(';')
+        return  query_set
+
 
     def _create_tables_and_schemas(self, queries):
         for query in queries:
